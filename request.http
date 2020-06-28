@@ -1,0 +1,19 @@
+###
+GET http://localhost:9090/people/
+
+###
+DELETE http://localhost:9090/people/
+
+###
+POST http://localhost:9090/people/
+Content-Type: application/json
+
+{
+  "name":{
+    "firstname" : "firstname",
+    "middlename": "middlename",
+    "lastname": "lastname"
+  },
+  "age":  29,
+  "nationality": "TR"
+}

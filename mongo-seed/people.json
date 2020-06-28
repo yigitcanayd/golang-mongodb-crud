@@ -1,0 +1,29 @@
+[
+  {
+    "name": {
+      "firstname": "firstname1",
+      "middlename": "middlename1",
+      "lastname": "lastname1"
+    },
+    "age": 19,
+    "nationality": "GB"
+  },
+  {
+    "name": {
+      "firstname": "firstname2",
+      "middlename": "middlename2",
+      "lastname": "lastname2"
+    },
+    "age": 29,
+    "nationality": "FR"
+  },
+  {
+    "name": {
+      "firstname": "firstname3",
+      "middlename": "middlename3",
+      "lastname": "lastname3"
+    },
+    "age": 39,
+    "nationality": "TR"
+  }
+]

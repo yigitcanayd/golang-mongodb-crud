@@ -1,0 +1,27 @@
+version: '3.6'
+services:
+  golang-app:
+    container_name: 'golang-api'
+    depends_on:
+      - mongodb
+    build: .
+    ports:
+      - '9090:9090'
+
+  mongodb:
+    image: 'mongo:3.6.17'
+    container_name: 'golang-db'
+    volumes:
+      - ./db:/data/db
+    ports:
+      - '27020:27017'
+
+  mongo-seed:
+    image: 'mongo:3.6.17'
+    restart: on-failure
+    links:
+      - mongodb
+    volumes:
+      - ./mongo-seed:/mongo-seed
+    command:
+      /mongo-seed/import.sh

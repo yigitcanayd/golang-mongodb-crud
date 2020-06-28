@@ -1,0 +1,9 @@
+# IntelliJ Idea generated files
+*.iml
+*.ipr
+*.iws
+.idea
+*plugin.xml
+
+# Mac generated files
+.DS_Store
