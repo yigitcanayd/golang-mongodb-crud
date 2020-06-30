@@ -26,52 +26,82 @@ type Name struct {
 var collection = mongodb.GetMongoClient().Database("golang").Collection("people")
 
 func GetHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	name := strings.TrimPrefix(r.URL.Path, "/people/")
-
+	name := setContentTypeAndGetPathVariable(w, r)
 	if len(name) > 0 {
-		var result primitive.M
-		err := collection.FindOne(context.TODO(), bson.D{{"name.firstname", name}}).Decode(&result)
-		if err != nil {
-			w.WriteHeader(404)
-			log.Fatal(err)
-		}
-		w.WriteHeader(200)
-		json.NewEncoder(w).Encode(result)
+		getRecord(w, name)
 	} else {
-		var results []primitive.M
-		cur, err := collection.Find(context.TODO(), bson.D{{}})
-		if err != nil {
-			w.WriteHeader(404)
-			log.Fatal(err)
-		}
-		for cur.Next(context.TODO()) {
-			var elem primitive.M
-			err := cur.Decode(&elem)
-			if err != nil {
-				log.Fatal(err)
-			}
-			results = append(results, elem)
-		}
-		cur.Close(context.TODO())
-		w.WriteHeader(200)
-		json.NewEncoder(w).Encode(results)
+		getAllRecords(w)
 	}
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	name := setContentTypeAndGetPathVariable(w, r)
 
 	var person Person
 	err := json.NewDecoder(r.Body).Decode(&person)
 	if err != nil {
-		w.WriteHeader(404)
-		log.Fatal(err)
+		w.WriteHeader(400)
+		log.Println(err)
 	}
-	insertResult, err := collection.InsertOne(context.TODO(), person)
+	if len(name) > 0 {
+		updateRecord(w, name, person)
+	} else {
+		insertRecord(w, person)
+	}
+}
+
+func DeleteHandler(w http.ResponseWriter, r *http.Request) {
+	name := setContentTypeAndGetPathVariable(w, r)
+	if len(name) > 0 {
+		deleteRecord(w, name)
+	} else {
+		w.WriteHeader(400)
+	}
+}
+
+func setContentTypeAndGetPathVariable(w http.ResponseWriter, r *http.Request) string {
+	w.Header().Set("Content-Type", "application/json")
+	name := strings.TrimPrefix(r.URL.Path, "/people/")
+	return name
+}
+
+func getRecord(w http.ResponseWriter, name string) {
+	var result primitive.M
+	filter := bson.D{{"name.firstname", name}}
+	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		w.WriteHeader(404)
-		log.Fatal(err)
+		log.Println(err)
+	}
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(result)
+}
+
+func getAllRecords(w http.ResponseWriter) {
+	var results []primitive.M
+	cur, err := collection.Find(context.TODO(), bson.D{{}})
+	if err != nil {
+		w.WriteHeader(404)
+		log.Println(err)
+	}
+	for cur.Next(context.TODO()) {
+		var elem primitive.M
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Println(err)
+		}
+		results = append(results, elem)
+	}
+	cur.Close(context.TODO())
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(results)
+}
+
+func insertRecord(w http.ResponseWriter, person Person) {
+	insertResult, err := collection.InsertOne(context.TODO(), person)
+	if err != nil {
+		w.WriteHeader(400)
+		log.Println(err)
 	}
 
 	log.Println("Inserted a single document: ", insertResult)
@@ -79,17 +109,26 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(insertResult.InsertedID)
 }
 
-func DeleteHandler(w http.ResponseWriter, r *http.Request) {
-	name := strings.TrimPrefix(r.URL.Path, "/people/")
-
-	if len(name) < 1 {
-		w.WriteHeader(400)
-	} else {
-		res, err := collection.DeleteOne(context.TODO(), bson.D{{"name.firstname", name}})
-		if err != nil {
-			w.WriteHeader(404)
-		}
-		log.Println(res)
-		w.WriteHeader(204)
+func updateRecord(w http.ResponseWriter, name string, person Person) {
+	filter := bson.D{{"name.firstname", name}}
+	update := bson.D{
+		{"$set", person},
 	}
+	_, err := collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		w.WriteHeader(404)
+		log.Println(err)
+	}
+	log.Println("Updated a document: ", name)
+	w.WriteHeader(200)
+}
+
+func deleteRecord(w http.ResponseWriter, name string) {
+	filter := bson.D{{"name.firstname", name}}
+	_, err := collection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		w.WriteHeader(404)
+	}
+	log.Println("Deleted a document: ", name)
+	w.WriteHeader(204)
 }

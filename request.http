@@ -17,3 +17,17 @@ Content-Type: application/json
   "age":  29,
   "nationality": "TR"
 }
+
+###
+POST http://localhost:9090/people/firstname
+Content-Type: application/json
+
+{
+  "name":{
+    "firstname" : "firstnameUpdate",
+    "middlename": "middlenameUpdate",
+    "lastname": "lastnameUpdate"
+  },
+  "age":  49,
+  "nationality": "DE"
+}
